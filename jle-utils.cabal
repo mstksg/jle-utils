@@ -19,10 +19,10 @@ library
   build-depends:       base >= 4.7 && < 5
   default-language:    Haskell2010
 
-executable jle-utils-exe
+executable jle-git-haddocks
   hs-source-dirs:      app
-  main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  main-is:             GitHaddocks.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall
   build-depends:       base
                      , aeson
                      , conduit
@@ -31,9 +31,17 @@ executable jle-utils-exe
                      , exceptions
                      , filepath
                      , gitlib
-                     -- , gitlib-cmdline
                      , gitlib-libgit2
                      , jle-utils
+                     , monad-logger
+                     , process
+                     , tagged
+                     , text
+                     , time
+                     , transformers
+                     , unordered-containers
+                     , yaml
+                     -- , gitlib-cmdline
   default-language:    Haskell2010
 
 test-suite jle-utils-test
