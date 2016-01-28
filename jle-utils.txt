@@ -10,14 +10,17 @@
 
 module JUtils.GHPages
 
--- | Replaces the gh-pages branch with the contents of the given directory.
-updatePages :: (MonadMask m, MonadLogger m, MonadIO m, MonadBaseControl IO m) => FilePath -> Maybe FilePath -> m ()
+-- | Runs <tt>updatepages'</tt> at the default log level, <a>LevelInfo</a>.
+updatePages :: FilePath -> Maybe FilePath -> IO ()
 
--- | Runs <a>updatePages</a> with the given log level.
+-- | Runs <a>updatePagesLogging</a> with the given log level.
 --   
 --   <ul>
---   <li>silent: error</li>
---   <li>normal: info</li>
---   <li>verbose: debug</li>
+--   <li>silent: <a>LevelError</a></li>
+--   <li>normal: <a>LevelInfo</a></li>
+--   <li>verbose: <a>LevelDebug</a></li>
 --   </ul>
-updatePagesLogging :: LogLevel -> FilePath -> Maybe FilePath -> IO ()
+updatePages' :: LogLevel -> FilePath -> Maybe FilePath -> IO ()
+
+-- | Replaces the gh-pages branch with the contents of the given directory.
+updatePagesLogging :: (MonadMask m, MonadLogger m, MonadIO m, MonadBaseControl IO m) => FilePath -> Maybe FilePath -> m ()
