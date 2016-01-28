@@ -121,14 +121,13 @@ getPagesRef = do
       Nothing -> do
         logWarnN "gh-pages branch not found"
         rTarget <- runMaybeT . asum
-                 $ map (MaybeT . lookupReference) ["HEAD", "refs/heads/master"]
+                 $ map (MaybeT . resolveReference) ["HEAD", "refs/heads/master"]
         case rTarget of
           Nothing -> throwM
                    $ ErrorCall "No reference \"HEAD\" or \"master\" to create gh-pages branch from."
           Just r -> do
             logWarnN "Creating branch gh-pages"
-            -- createReference ghPagesRef r
-            createReference ghPagesRef ghPagesRef
+            createReference ghPagesRef (RefObj r)
             rOid <- resolveReference ghPagesRef >>= \mRoid ->
                       case mRoid of
                         Nothing   -> throwM $ ErrorCall "Error creating gh-pages branch."
