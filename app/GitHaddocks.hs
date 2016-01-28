@@ -67,6 +67,7 @@ main = runStderrLoggingT $ do
 
     logDebugN ("Resolved project name and version: " <> T.pack projNameVer)
 
+    logDebugN ("Rebuilding haddocks")
     dr <- liftIO $ do
         callCommand "stack haddock"
         readCreateProcess (shell "stack path --local-doc-root") ""
@@ -88,6 +89,7 @@ main = runStderrLoggingT $ do
       tEnts <- listTreeEntries =<< lookupTree toid
       logDebugN . T.pack $ printf "Built tree with contained %d files."
                                   (length tEnts)
+      logDebugN ("Creating commit")
       c' <- createCommit [commitOid c]
                          toid
                          (commitAuthor c)
@@ -95,6 +97,7 @@ main = runStderrLoggingT $ do
                          commitMsg
                          (Just ghPagesRef)
 
+      logDebugN ("Updating gh-pages branch")
       updateReference ghPagesRef (commitRefTarget c')
 
     -- TODO: push automatically.  but i guess it's not that important
@@ -125,6 +128,20 @@ getPagesRef = do
           Just r -> do
             logWarnN "Creating branch gh-pages"
             createReference ghPagesRef r
+            rOid <- resolveReference ghPagesRef >>= \mRoid ->
+                      case mRoid of
+                        Nothing   -> throwM $ ErrorCall "Error creating gh-pages branch."
+                        Just roid -> return roid
+            toid <- createTree $ return ()
+            c <- lookupCommit $ Tagged rOid
+            c' <- createCommit [commitOid c]
+                               toid
+                               (commitAuthor c)
+                               (commitCommitter c)
+                               "Emptying branch gh-pages"
+                               (Just ghPagesRef)
+            updateReference ghPagesRef (commitRefTarget c')
+
             rPages' <- resolveReference ghPagesRef
             case rPages' of
               Just r' -> return r'
