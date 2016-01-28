@@ -5,8 +5,9 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-import Control.Applicative
+-- import Git.CmdLine
 import Control.Exception
+import Control.Monad
 import Control.Monad.Catch
 import Control.Monad.IO.Class
 import Control.Monad.Logger
@@ -15,7 +16,6 @@ import Control.Monad.Trans.Maybe
 import Data.Aeson.TH
 import Data.Char
 import Data.Foldable
-import Data.Maybe
 import Data.Monoid
 import Data.Tagged
 import Data.Time.Clock
@@ -31,34 +31,30 @@ import System.Directory
 import System.FilePath
 import System.Process
 import Text.Printf
-import qualified Conduit                  as C
-import qualified Data.Aeson.Types         as A
-import qualified Data.ByteString          as B
-import qualified Data.HashMap.Strict      as H
-import qualified Data.Text                as T
-import qualified Data.Text.Encoding       as T
-import qualified Data.Text.IO             as T
-import qualified Data.Yaml                as Y
+import qualified Conduit             as C
+import qualified Data.HashMap.Strict as H
+import qualified Data.Text           as T
+import qualified Data.Text.Encoding  as T
+import qualified Data.Yaml           as Y
 
 ghPagesRef :: T.Text
 ghPagesRef = "refs/heads/gh-pages"
 
--- data GHError = GHECreateReference
-
-data LocalInfo = LI { liPath    :: String
-                    , liVersion :: String
+data LocalInfo = LI { _liPath    :: String
+                    , _liVersion :: String
                     }
   deriving (Show, Eq, Generic)
 
-$(deriveJSON defaultOptions{fieldLabelModifier = (drop 2 . map toLower) } ''LocalInfo)
+$(deriveJSON defaultOptions{fieldLabelModifier = (drop 3 . map toLower) } ''LocalInfo)
 
 main :: IO ()
 main = runStderrLoggingT $ do
-    -- assumes project is root
+    -- assumes project is root.
+    -- TODO: fix this
     projNameVer <- liftIO $ do
       projName <- takeBaseName <$> getCurrentDirectory
 
-      localsData <- fmap liVersion
+      localsData <- fmap _liVersion
                   . (H.lookup projName =<<)
                   . Y.decode
                   . T.encodeUtf8
@@ -100,14 +96,18 @@ main = runStderrLoggingT $ do
                          (Just ghPagesRef)
 
       updateReference ghPagesRef (commitRefTarget c')
-      return ()
 
-  -- lol, all that work and it ends with a shell script
-  -- liftIO $ callCommand "git push"
+    -- TODO: push automatically.  but i guess it's not that important
+    -- withRepository cliFactory "./" . void $ do
+    --   cliPushCommit (Tagged (SHA $ T.encodeUtf8 ghPagesRef))
+    --                 "origin"
+    --                 ghPagesRef
+    --                 (Just "/home/justin/.ssh/id_rsa")
+      -- r <- resolveReference ghPagesRef
+      -- case r of
+      --   Nothing -> logErrorN $ "gitlib-cmdline cannot find gh-pages branch.  Please push manually."
+      --   Just r' -> void $ cliPushCommit (Tagged r') "origin" ghPagesRef Nothing
 
-    -- liftIO . print $ commitAuthor c
-    -- t <- lookupTree (commitTree c)
-    -- liftIO . print . map fst =<< listTreeEntries t
 
 getPagesRef
     :: forall r m. (MonadGit r m, MonadLogger m, MonadThrow m)
@@ -159,8 +159,3 @@ buildDocTree rt = go ""
               go bn'
           | otherwise -> do
               liftIO . putStrLn $ "Bad file: " ++ fullFn
-
-
-
-
-
