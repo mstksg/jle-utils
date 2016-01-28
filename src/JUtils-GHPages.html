@@ -55,8 +55,8 @@
 <a name="line-46"></a><span class='hs-comment'>-- - verbose: debug</span>
 <a name="line-47"></a><span class='hs-definition'>updatePagesLogging</span>
 <a name="line-48"></a>    <span class='hs-keyglyph'>::</span> <span class='hs-conid'>LogLevel</span>
-<a name="line-49"></a>    <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>FilePath</span>
-<a name="line-50"></a>    <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Maybe</span> <span class='hs-conid'>FilePath</span>
+<a name="line-49"></a>    <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>FilePath</span>         <span class='hs-comment'>-- ^ The directory to copy over</span>
+<a name="line-50"></a>    <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Maybe</span> <span class='hs-conid'>FilePath</span>   <span class='hs-comment'>-- ^ Optional: root directory of gh-pages copy</span>
 <a name="line-51"></a>    <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-conid'>()</span>
 <a name="line-52"></a><span class='hs-definition'>updatePagesLogging</span> <span class='hs-varid'>level</span> <span class='hs-varid'>fromDir</span> <span class='hs-varid'>toDir</span> <span class='hs-keyglyph'>=</span>
 <a name="line-53"></a>    <span class='hs-varid'>runStderrLoggingT</span> <span class='hs-varop'>.</span> <span class='hs-varid'>getOnMy</span> <span class='hs-varid'>level</span>
