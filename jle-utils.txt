@@ -10,5 +10,6 @@
 
 module Lib
 
--- | This is some func, ain't it. Trying again. Another edit.
+-- | This is some func, ain't it. Trying again. Another edit. Small test,
+--   again.
 someFunc :: IO ()
