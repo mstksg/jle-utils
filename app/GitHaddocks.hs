@@ -128,20 +128,6 @@ getPagesRef = do
           Just r -> do
             logWarnN "Creating branch gh-pages"
             createReference ghPagesRef (RefObj r)
-            -- rOid <- resolveReference ghPagesRef >>= \mRoid ->
-            --           case mRoid of
-            --             Nothing   -> throwM $ ErrorCall "Error creating gh-pages branch."
-            --             Just roid -> return roid
-            -- toid <- createTree $ return ()
-            -- c <- lookupCommit $ Tagged rOid
-            -- c' <- createCommit [commitOid c]
-            --                    toid
-            --                    (commitAuthor c)
-            --                    (commitCommitter c)
-            --                    "Emptying branch gh-pages"
-            --                    (Just ghPagesRef)
-
-            -- updateReference ghPagesRef (commitRefTarget c')
 
             rPages' <- resolveReference ghPagesRef
             case rPages' of
@@ -150,7 +136,6 @@ getPagesRef = do
                        $ ErrorCall "Error creating gh-pages branch."
       Just r -> return r
 
-    -- return undefined
 
 buildDocTree
     :: forall m r. (C.MonadResource m, MonadIO m, MonadLogger m, MonadGit r m)
