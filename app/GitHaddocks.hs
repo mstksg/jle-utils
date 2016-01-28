@@ -37,6 +37,9 @@ import qualified Data.Text           as T
 import qualified Data.Text.Encoding  as T
 import qualified Data.Yaml           as Y
 
+-- TODO: Make linking work for haddocks, to basically link to correct stack
+-- snapshot documentation i guess?
+
 ghPagesRef :: T.Text
 ghPagesRef = "refs/heads/gh-pages"
 
