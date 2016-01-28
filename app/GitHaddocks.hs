@@ -127,7 +127,8 @@ getPagesRef = do
                    $ ErrorCall "No reference \"HEAD\" or \"master\" to create gh-pages branch from."
           Just r -> do
             logWarnN "Creating branch gh-pages"
-            createReference ghPagesRef r
+            -- createReference ghPagesRef r
+            createReference ghPagesRef ghPagesRef
             rOid <- resolveReference ghPagesRef >>= \mRoid ->
                       case mRoid of
                         Nothing   -> throwM $ ErrorCall "Error creating gh-pages branch."
@@ -140,6 +141,7 @@ getPagesRef = do
                                (commitCommitter c)
                                "Emptying branch gh-pages"
                                (Just ghPagesRef)
+
             updateReference ghPagesRef (commitRefTarget c')
 
             rPages' <- resolveReference ghPagesRef
