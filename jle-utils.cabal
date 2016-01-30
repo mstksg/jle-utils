@@ -41,7 +41,6 @@ executable jle-git-haddocks
                      , transformers
                      , unordered-containers
                      , yaml
-                     -- , gitlib-cmdline
   default-language:    Haskell2010
 
 test-suite jle-utils-test

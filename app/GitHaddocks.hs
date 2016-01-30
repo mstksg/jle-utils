@@ -79,7 +79,7 @@ main = runStderrLoggingT $ do
 
     let docRoot = zipWith const dr (drop 1 dr) </> projNameVer
         tStr    = formatTime defaultTimeLocale "%c" now
-        commitMsg = T.pack $ printf "Update gh-pages documentation for %s at %s"
+        commitMsg = T.pack $ printf "Update gh-pages documentation for %s at %s\n"
                                     projNameVer tStr
 
     logDebugN ("Resolved documentation root: " <> T.pack docRoot)
@@ -89,19 +89,25 @@ main = runStderrLoggingT $ do
       -- liftIO . putStrLn $ "Reference object: " ++ show r
       c <- lookupCommit $ Tagged r
       toid <- createTree (buildDocTree docRoot)
+
       tEnts <- listTreeEntries =<< lookupTree toid
       logDebugN . T.pack $ printf "Built tree with contained %d files."
                                   (length tEnts)
-      logDebugN ("Creating commit")
-      c' <- createCommit [commitOid c]
-                         toid
-                         (commitAuthor c)
-                         (commitCommitter c)
-                         commitMsg
-                         (Just ghPagesRef)
 
-      logDebugN ("Updating gh-pages branch")
-      updateReference ghPagesRef (commitRefTarget c')
+      if toid /= commitTree c
+        then do
+          logDebugN ("Creating commit")
+          c' <- createCommit [commitOid c]
+                             toid
+                             (commitAuthor c)
+                             (commitCommitter c)
+                             commitMsg
+                             (Just ghPagesRef)
+
+          logDebugN ("Updating gh-pages branch")
+          updateReference ghPagesRef (commitRefTarget c')
+        else
+          logWarnN "No changes detected from old documentation.  No commit written."
 
     -- TODO: push automatically.  but i guess it's not that important
     -- withRepository cliFactory "./" . void $ do
