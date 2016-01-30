@@ -53,7 +53,9 @@ data LocalInfo = LI { _liPath    :: String
 $(deriveJSON defaultOptions{fieldLabelModifier = (drop 3 . map toLower) } ''LocalInfo)
 
 data Opts = O { oLogLevel :: LogLevel
+              , oDirBase  :: FilePath
               }
+  deriving (Show, Eq)
 
 parseOpts :: Parser Opts
 parseOpts = O <$> ( flag' LevelDebug
@@ -64,9 +66,17 @@ parseOpts = O <$> ( flag' LevelDebug
                 <|> flag LevelWarn LevelError
                       ( short 's'
                      <> long "silent"
-                     <> help "No output except for output from haddock"
+                     <> help "Silence output except for output from haddock"
                       )
                   )
+              <*> strOption
+                    ( short 'd'
+                   <> long "directory"
+                   <> metavar "DIR"
+                   <> help "Directory root in gh-pages to place haddock files in"
+                   <> value ""
+                   <> showDefaultWith (\_ -> ".")
+                    )
 
 main :: IO ()
 main = do
@@ -113,7 +123,7 @@ main = do
         r <- getPagesRef
         -- liftIO . putStrLn $ "Reference object: " ++ show r
         c <- lookupCommit $ Tagged r
-        toid <- createTree (buildDocTree docRoot)
+        toid <- createTree (buildDocTree docRoot oDirBase)
 
         tEnts <- listTreeEntries =<< lookupTree toid
         logDebugN . T.pack $ printf "Built tree with contained %d files."
@@ -174,8 +184,9 @@ getPagesRef = do
 buildDocTree
     :: forall m r. (C.MonadResource m, MonadIO m, MonadLogger m, MonadGit r m)
     => FilePath
+    -> FilePath
     -> TreeT r m ()
-buildDocTree rt = go ""
+buildDocTree rt = go
   where
     go :: FilePath -> TreeT r m ()
     go bn = do
