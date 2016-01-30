@@ -1,9 +1,10 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE MultiWayIf #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DeriveGeneric       #-}
+{-# LANGUAGE MultiWayIf          #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TemplateHaskell     #-}
+{-# LANGUAGE TypeFamilies        #-}
 
 -- import Git.CmdLine
 import Control.Exception
@@ -27,6 +28,7 @@ import Git.Repository
 import Git.Tree
 import Git.Tree.Builder
 import Git.Types
+import Options.Applicative
 import System.Directory
 import System.FilePath
 import System.Process
@@ -50,75 +52,98 @@ data LocalInfo = LI { _liPath    :: String
 
 $(deriveJSON defaultOptions{fieldLabelModifier = (drop 3 . map toLower) } ''LocalInfo)
 
+data Opts = O { oLogLevel :: LogLevel
+              }
+
+parseOpts :: Parser Opts
+parseOpts = O <$> ( flag' LevelDebug
+                      ( short 'v'
+                     <> long "verbose"
+                     <> help "Display extra debug messages.  Will take priority over the \"silent\" flag"
+                      )
+                <|> flag LevelWarn LevelError
+                      ( short 's'
+                     <> long "silent"
+                     <> help "No output except for output from haddock"
+                      )
+                  )
+
 main :: IO ()
-main = runStderrLoggingT $ do
-    -- assumes project is root.
-    -- TODO: fix this
-    projNameVer <- liftIO $ do
-      projName <- takeBaseName <$> getCurrentDirectory
+main = do
+    O{..} <- execParser $ info (helper <*> parseOpts)
+                               ( fullDesc
+                              <> progDesc "Update gh-pages branch with haddock renders."
+                              <> header "jle-git-haddocks - sync haddocks to gh-pages"
+                               )
 
-      localsData <- fmap _liVersion
-                  . (H.lookup projName =<<)
-                  . Y.decode
-                  . T.encodeUtf8
-                  . T.pack
-                <$> readCreateProcess (shell "stack query locals") ""
+    runStderrLoggingT . filterLogger (\_ l -> l >= oLogLevel) $ do
+      -- assumes project is root.
+      -- TODO: fix this
+      projNameVer <- liftIO $ do
+        projName <- takeBaseName <$> getCurrentDirectory
 
-      case localsData of
-        Nothing -> throwM $ ErrorCall "Could not resolve project version."
-        Just v  -> return $ projName ++ "-" ++ v
+        localsData <- fmap _liVersion
+                    . (H.lookup projName =<<)
+                    . Y.decode
+                    . T.encodeUtf8
+                    . T.pack
+                  <$> readCreateProcess (shell "stack query locals") ""
 
-    logDebugN ("Resolved project name and version: " <> T.pack projNameVer)
+        case localsData of
+          Nothing -> throwM $ ErrorCall "Could not resolve project version."
+          Just v  -> return $ projName ++ "-" ++ v
 
-    logDebugN ("Rebuilding haddocks")
-    dr <- liftIO $ do
-        callCommand "stack haddock"
-        readCreateProcess (shell "stack path --local-doc-root") ""
+      logDebugN ("Resolved project name and version: " <> T.pack projNameVer)
 
-    now <- liftIO getCurrentTime
+      logDebugN ("Rebuilding haddocks")
+      dr <- liftIO $ do
+          callCommand "stack haddock"
+          readCreateProcess (shell "stack path --local-doc-root") ""
 
-    let docRoot = zipWith const dr (drop 1 dr) </> projNameVer
-        tStr    = formatTime defaultTimeLocale "%c" now
-        commitMsg = T.pack $ printf "Update gh-pages documentation for %s at %s\n"
-                                    projNameVer tStr
+      now <- liftIO getCurrentTime
 
-    logDebugN ("Resolved documentation root: " <> T.pack docRoot)
+      let docRoot = zipWith const dr (drop 1 dr) </> projNameVer
+          tStr    = formatTime defaultTimeLocale "%c" now
+          commitMsg = T.pack $ printf "Update gh-pages documentation for %s at %s\n"
+                                      projNameVer tStr
 
-    C.runResourceT . withRepository lgFactory "./" $ do
-      r <- getPagesRef
-      -- liftIO . putStrLn $ "Reference object: " ++ show r
-      c <- lookupCommit $ Tagged r
-      toid <- createTree (buildDocTree docRoot)
+      logDebugN ("Resolved documentation root: " <> T.pack docRoot)
 
-      tEnts <- listTreeEntries =<< lookupTree toid
-      logDebugN . T.pack $ printf "Built tree with contained %d files."
-                                  (length tEnts)
+      C.runResourceT . withRepository lgFactory "./" $ do
+        r <- getPagesRef
+        -- liftIO . putStrLn $ "Reference object: " ++ show r
+        c <- lookupCommit $ Tagged r
+        toid <- createTree (buildDocTree docRoot)
 
-      if toid /= commitTree c
-        then do
-          logDebugN ("Creating commit")
-          c' <- createCommit [commitOid c]
-                             toid
-                             (commitAuthor c)
-                             (commitCommitter c)
-                             commitMsg
-                             (Just ghPagesRef)
+        tEnts <- listTreeEntries =<< lookupTree toid
+        logDebugN . T.pack $ printf "Built tree with contained %d files."
+                                    (length tEnts)
 
-          logDebugN ("Updating gh-pages branch")
-          updateReference ghPagesRef (commitRefTarget c')
-        else
-          logWarnN "No changes detected from old documentation.  No commit written."
+        if toid /= commitTree c
+          then do
+            logDebugN ("Creating commit")
+            c' <- createCommit [commitOid c]
+                               toid
+                               (commitAuthor c)
+                               (commitCommitter c)
+                               commitMsg
+                               (Just ghPagesRef)
 
-    -- TODO: push automatically.  but i guess it's not that important
-    -- withRepository cliFactory "./" . void $ do
-    --   cliPushCommit (Tagged (SHA $ T.encodeUtf8 ghPagesRef))
-    --                 "origin"
-    --                 ghPagesRef
-    --                 (Just "/home/justin/.ssh/id_rsa")
-      -- r <- resolveReference ghPagesRef
-      -- case r of
-      --   Nothing -> logErrorN $ "gitlib-cmdline cannot find gh-pages branch.  Please push manually."
-      --   Just r' -> void $ cliPushCommit (Tagged r') "origin" ghPagesRef Nothing
+            logWarnN ("Updating gh-pages branch")
+            updateReference ghPagesRef (commitRefTarget c')
+          else
+            logWarnN "No changes detected from old documentation.  No commit written."
+
+      -- TODO: push automatically.  but i guess it's not that important
+      -- withRepository cliFactory "./" . void $ do
+      --   cliPushCommit (Tagged (SHA $ T.encodeUtf8 ghPagesRef))
+      --                 "origin"
+      --                 ghPagesRef
+      --                 (Just "/home/justin/.ssh/id_rsa")
+        -- r <- resolveReference ghPagesRef
+        -- case r of
+        --   Nothing -> logErrorN $ "gitlib-cmdline cannot find gh-pages branch.  Please push manually."
+        --   Just r' -> void $ cliPushCommit (Tagged r') "origin" ghPagesRef Nothing
 
 
 getPagesRef
