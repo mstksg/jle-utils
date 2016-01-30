@@ -63,7 +63,7 @@ parseOpts = O <$> ( flag' LevelDebug
                      <> long "verbose"
                      <> help "Display extra debug messages.  Will take priority over the \"silent\" flag"
                       )
-                <|> flag LevelWarn LevelError
+                <|> flag LevelInfo LevelError
                       ( short 's'
                      <> long "silent"
                      <> help "Silence output except for output from haddock"
@@ -139,7 +139,7 @@ main = do
                                commitMsg
                                (Just ghPagesRef)
 
-            logWarnN ("Updating gh-pages branch")
+            logInfoN ("Updating gh-pages branch")
             updateReference ghPagesRef (commitRefTarget c')
           else
             logWarnN "No changes detected from old documentation.  No commit written."
@@ -186,7 +186,7 @@ buildDocTree
     => FilePath
     -> FilePath
     -> TreeT r m ()
-buildDocTree rt = go
+buildDocTree rt br = go ""
   where
     go :: FilePath -> TreeT r m ()
     go bn = do
@@ -194,14 +194,14 @@ buildDocTree rt = go
       forM_ (filter (`notElem` [".",".."]) fns) $ \fn -> do
         let fullFn = T.unpack . T.pack $ rt </> bn </> fn
             bn'    = bn </> fn
-            bn'T   = T.pack bn'
+            targ   = T.pack (br </> bn')
         isFile <- liftIO $ doesFileExist fullFn
         isDirectory <- liftIO $ doesDirectoryExist fullFn
         if| isFile -> do
               lift . logDebugN $ "Processing file " <> T.pack fullFn
               boid <- lift . createBlob $ BlobStream (C.sourceFile fullFn)
-              lift . logDebugN $ "Writing to tree at " <> bn'T
-              putBlob (T.encodeUtf8 bn'T) boid
+              lift . logDebugN $ "Writing to tree at " <> targ
+              putBlob (T.encodeUtf8 targ) boid
           | isDirectory -> do
               lift . logDebugN $ "Descending down directory " <> T.pack fullFn
               go bn'
