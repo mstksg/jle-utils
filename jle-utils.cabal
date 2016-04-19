@@ -15,9 +15,23 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Lib
+  exposed-modules:     JUtils.GHPages
   build-depends:       base >= 4.7 && < 5
+                     , conduit-combinators
+                     , directory
+                     , exceptions
+                     , transformers-base
+                     , filepath
+                     , gitlib
+                     , gitlib-libgit2
+                     , monad-control
+                     , monad-logger
+                     , tagged
+                     , text
+                     , time
+                     , transformers
   default-language:    Haskell2010
+  ghc-options:         -Wall
 
 executable jle-git-haddocks
   hs-source-dirs:      app
@@ -43,6 +57,33 @@ executable jle-git-haddocks
                      , unordered-containers
                      , yaml
   default-language:    Haskell2010
+  ghc-options:         -Wall
+
+executable jle-update-gh-pages
+  hs-source-dirs:      app
+  main-is:             UpdateGHPages.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N -Wall
+  build-depends:       base
+                     , aeson
+                     , conduit
+                     , conduit-combinators
+                     , directory
+                     , exceptions
+                     , filepath
+                     , gitlib
+                     , gitlib-libgit2
+                     , jle-utils
+                     , monad-logger
+                     , optparse-applicative
+                     , process
+                     , tagged
+                     , text
+                     , time
+                     , transformers
+                     , unordered-containers
+                     , yaml
+  default-language:    Haskell2010
+  ghc-options:         -Wall
 
 test-suite jle-utils-test
   type:                exitcode-stdio-1.0
