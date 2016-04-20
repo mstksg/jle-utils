@@ -17,6 +17,7 @@ import           Data.Monoid
 import           Data.Tagged
 import           Data.Time.Clock
 import           Data.Time.Format
+import           Foreign.ForeignPtr
 import           Git.Libgit2
 import           Git.Reference
 import           Git.Repository
@@ -33,7 +34,11 @@ import qualified Data.Text.Encoding          as T
 ghPagesRef :: T.Text
 ghPagesRef = "refs/heads/gh-pages"
 
-updatePages :: (MonadMask m, MonadLogger m, MonadIO m, MonadBaseControl IO m) => FilePath -> FilePath -> m ()
+updatePages
+    :: (MonadMask m, MonadLogger m, MonadIO m, MonadBaseControl IO m)
+    => FilePath
+    -> FilePath
+    -> m ()
 updatePages fromDir toDir = do
     now <- liftIO getCurrentTime
 
@@ -42,7 +47,6 @@ updatePages fromDir toDir = do
 
     C.runResourceT . withRepository lgFactory "./" $ do
       r <- getPagesRef
-      -- liftIO . putStrLn $ "Reference object: " ++ show r
       c <- lookupCommit $ Tagged r
       toid <- createTree (buildPagesTree fromDir toDir)
 
@@ -62,6 +66,10 @@ updatePages fromDir toDir = do
 
           logInfoN ("Updating gh-pages branch")
           updateReference ghPagesRef (commitRefTarget c')
+          let fOid = getOid . untag $ commitOid c'
+          liftBaseOp (withForeignPtr fOid) $ \oid -> do
+            hash <- take 7 . show <$> liftIO (oidToSha oid)
+            logWarnN ("Succesfully updated branch to " <> T.pack hash)
         else
           logWarnN "No changes detected.  No commit written."
 
