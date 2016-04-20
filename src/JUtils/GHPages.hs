@@ -95,7 +95,7 @@ getPagesRef = do
       Nothing -> do
         logWarnN "gh-pages branch not found"
         rTarget <- runMaybeT . asum
-                 $ map (MaybeT . resolveReference) ["HEAD", masterRef]
+                 $ map (MaybeT . resolveReference) ["HEAD", "refs/heads/master"]
         case rTarget of
           Nothing -> throwM
                    $ ErrorCall "No reference \"HEAD\" or \"master\" to create gh-pages branch from."
@@ -109,8 +109,6 @@ getPagesRef = do
               Nothing -> throwM
                        $ ErrorCall "Error creating gh-pages branch."
       Just r -> return r
-  where
-    masterRef  = "refs/heads/master"
 
 
 buildPagesTree
