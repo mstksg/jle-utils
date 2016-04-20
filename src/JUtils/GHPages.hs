@@ -3,7 +3,10 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module JUtils.GHPages where
+module JUtils.GHPages
+  ( updatePages
+  )
+  where
 
 import           Control.Exception
 import           Control.Monad.Catch
