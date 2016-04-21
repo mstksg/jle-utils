@@ -5,6 +5,8 @@
 
 module JUtils.GHPages
   ( updatePages
+  , updatePages'
+  , updatePagesLogging
   )
   where
 
@@ -16,11 +18,11 @@ import           Control.Monad.Trans.Class
 import           Control.Monad.Trans.Control
 import           Control.Monad.Trans.Maybe
 import           Data.Foldable
+import           Data.Maybe
 import           Data.Monoid
 import           Data.Tagged
 import           Data.Time.Clock
 import           Data.Time.Format
-import           Foreign.ForeignPtr
 import           Git.Libgit2
 import           Git.Reference
 import           Git.Repository
@@ -37,12 +39,35 @@ import qualified Data.Text.Encoding          as T
 ghPagesRef :: T.Text
 ghPagesRef = "refs/heads/gh-pages"
 
+-- | Runs 'updatepages'' at the default log level, 'LevelInfo'.
 updatePages
+    :: FilePath         -- ^ The directory to copy over
+    -> Maybe FilePath   -- ^ Optional: root directory of gh-pages copy
+    -> IO ()
+updatePages = updatePages' LevelInfo
+
+-- | Runs 'updatePagesLogging' with the given log level.
+--
+-- - silent: 'LevelError'
+-- - normal: 'LevelInfo'
+-- - verbose: 'LevelDebug'
+updatePages'
+    :: LogLevel
+    -> FilePath         -- ^ The directory to copy over
+    -> Maybe FilePath   -- ^ Optional: root directory of gh-pages copy
+    -> IO ()
+updatePages' level fromDir toDir =
+    runStderrLoggingT . getOnMy level $ updatePagesLogging fromDir toDir
+  where
+    getOnMy lev = filterLogger (\_ l -> l >= lev)
+
+-- | Replaces the gh-pages branch with the contents of the given directory.
+updatePagesLogging
     :: (MonadMask m, MonadLogger m, MonadIO m, MonadBaseControl IO m)
-    => FilePath
-    -> FilePath
+    => FilePath         -- ^ The directory to copy over
+    -> Maybe FilePath   -- ^ Optional: root directory of gh-pages copy
     -> m ()
-updatePages fromDir toDir = do
+updatePagesLogging fromDir toDir = do
     now <- liftIO getCurrentTime
 
     let tStr    = formatTime defaultTimeLocale "%c" now
@@ -51,7 +76,7 @@ updatePages fromDir toDir = do
     C.runResourceT . withRepository lgFactory "./" $ do
       r <- getPagesRef
       c <- lookupCommit $ Tagged r
-      toid <- createTree (buildPagesTree fromDir toDir)
+      toid <- createTree (buildPagesTree fromDir (fromMaybe "" toDir))
 
       tEnts <- listTreeEntries =<< lookupTree toid
       logDebugN . T.pack $ printf "Built tree with %d files."
@@ -69,10 +94,8 @@ updatePages fromDir toDir = do
 
           logInfoN ("Updating gh-pages branch")
           updateReference ghPagesRef (commitRefTarget c')
-          let fOid = getOid . untag $ commitOid c'
-          liftBaseOp (withForeignPtr fOid) $ \oid -> do
-            hash <- take 7 . show <$> liftIO (oidToSha oid)
-            logWarnN ("Succesfully updated branch to " <> T.pack hash)
+          let hash = T.take 7 . renderObjOid $ commitOid c'
+          logInfoN ("Succesfully updated branch to " <> hash)
         else
           logWarnN "No changes detected.  No commit written."
 

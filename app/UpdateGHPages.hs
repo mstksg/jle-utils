@@ -5,7 +5,7 @@ import JUtils.GHPages
 import Options.Applicative
 
 data Opts = O { oLogLevel :: LogLevel
-              , oToBase   :: FilePath
+              , oToBase   :: Maybe FilePath
               , oFromBase :: FilePath
               }
   deriving (Show, Eq)
@@ -22,13 +22,15 @@ parseOpts = O <$> ( flag' LevelDebug
                      <> help "Silence output except for output from haddock"
                       )
                   )
-              <*> strOption
-                    ( short 't'
-                   <> long "target"
-                   <> metavar "TARGET"
-                   <> help "Directory root in gh-pages to place files in"
-                   <> value ""
-                   <> showDefaultWith (\_ -> ".")
+              <*> optional
+                    (strOption
+                       ( short 't'
+                      <> long "target"
+                      <> metavar "TARGET"
+                      <> help "Directory root in gh-pages to place files in"
+                      <> value ""
+                      <> showDefaultWith (\_ -> ".")
+                       )
                     )
               <*> argument str
                     ( metavar "DIR"
@@ -43,5 +45,4 @@ main = do
                               <> header "jle-update-gh-pages - copy folder to gh-pages branch"
                                )
 
-    runStderrLoggingT . filterLogger (\_ l -> l >= oLogLevel) $
-      updatePages oFromBase oToBase
+    updatePages' oLogLevel oFromBase oToBase

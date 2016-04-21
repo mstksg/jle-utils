@@ -34,7 +34,7 @@ data LocalInfo = LI { _liPath    :: String
 $(deriveJSON defaultOptions{fieldLabelModifier = (drop 3 . map toLower) } ''LocalInfo)
 
 data Opts = O { oLogLevel :: LogLevel
-              , oDirBase  :: FilePath
+              , oDirBase  :: Maybe FilePath
               }
   deriving (Show, Eq)
 
@@ -50,13 +50,13 @@ parseOpts = O <$> ( flag' LevelDebug
                      <> help "Silence output except for output from haddock"
                       )
                   )
-              <*> strOption
-                    ( short 'd'
-                   <> long "directory"
-                   <> metavar "DIR"
-                   <> help "Directory root in gh-pages to place haddock files in"
-                   <> value ""
-                   <> showDefaultWith (\_ -> ".")
+              <*> optional
+                    (strOption
+                       ( short 'd'
+                      <> long "directory"
+                      <> metavar "DIR"
+                      <> help "Directory root in gh-pages to place haddock files in"
+                       )
                     )
 
 main :: IO ()
@@ -93,4 +93,4 @@ main = do
 
       let docRoot = zipWith const dr (drop 1 dr) </> projNameVer
 
-      updatePages docRoot oDirBase
+      updatePagesLogging docRoot oDirBase
