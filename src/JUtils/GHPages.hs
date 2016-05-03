@@ -21,7 +21,7 @@ import           Data.Foldable
 import           Data.Maybe
 import           Data.Monoid
 import           Data.Tagged
-import           Data.Time.Clock
+import           Data.Time.LocalTime
 import           Data.Time.Format
 import           Git.Libgit2
 import           Git.Reference
@@ -68,7 +68,7 @@ updatePagesLogging
     -> Maybe FilePath   -- ^ Optional: root directory of gh-pages copy
     -> m ()
 updatePagesLogging fromDir toDir = do
-    now <- liftIO getCurrentTime
+    now <- liftIO getZonedTime
 
     let tStr    = formatTime defaultTimeLocale "%c" now
         commitMsg = T.pack $ printf "Update gh-pages at %s\n" tStr
@@ -87,8 +87,8 @@ updatePagesLogging fromDir toDir = do
           logDebugN ("Creating commit")
           c' <- createCommit [commitOid c]
                              toid
-                             (commitAuthor c)
-                             (commitCommitter c)
+                             (commitAuthor c)    { signatureWhen = now }
+                             (commitCommitter c) { signatureWhen = now }
                              commitMsg
                              (Just ghPagesRef)
 
