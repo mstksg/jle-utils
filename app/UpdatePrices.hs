@@ -80,8 +80,8 @@ main = do
     putStrLn $ showMarketPrice mp
 
 _jmarketprices :: Lens' Journal [MarketPrice]
-_jmarketprices f j = (\ps -> j { jmarketprices = ps })
-                        <$> f (jmarketprices j)
+_jmarketprices f j = f (jmarketprices j) <&> \ps ->
+                       j { jmarketprices = ps }
 
 sortNubWith :: Ord b => (a -> b) -> [a] -> [a]
 sortNubWith f = toList . M.fromList . map (\x -> (f x, x))
