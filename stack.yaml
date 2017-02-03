@@ -8,7 +8,7 @@ packages:
 - '.'
 - location:
     git: https://github.com/mstksg/hledger.git
-    commit: eea2054efc7d6581033f47a166cb7cfbd237b888
+    commit: 98057fb36d631a5e9742b5dcf11fd47572c5c95b
   subdirs:
   - hledger-lib
   extra-dep: true
