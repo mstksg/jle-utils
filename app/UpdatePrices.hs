@@ -10,10 +10,7 @@ import           Data.Aeson.Lens
 import           Data.Aeson.Types
 import           Data.Fixed
 import           Data.Foldable
-import           Data.Functor
-import           Data.List
 import           Data.Monoid
-import           Data.Ord
 import           Data.Time.Format
 import           Data.Time.LocalTime
 import           GHC.Generics             (Generic)
@@ -49,8 +46,8 @@ instance ToJSON Spot where
     toEncoding = genericToEncoding defaultOptions
                    { fieldLabelModifier = camelTo2 '-' . drop 4 }
 
-commoditiesPath :: FilePath
-commoditiesPath = "/home/justin/.hledger/commodities.journal"
+pricesPath :: FilePath
+pricesPath = "/home/justin/.hledger/prices.journal"
 
 main :: IO ()
 main = do
@@ -59,7 +56,7 @@ main = do
     let Just (Spot{..}) = r ^? responseBody . key "data" . _JSON
         mp = MarketPrice (localDay t) "BTC" (usd (realToFrac _spotAmount))
 
-    Right j <- readJournalFile Nothing Nothing True commoditiesPath
+    Right j <- readJournalFile Nothing Nothing True pricesPath
     let mpmap = fmap (sortNubWith mpdate . ($ []))
               . M.fromListWith (.)
               . map (\p -> (mpcommodity p, (++ [p])))
@@ -68,17 +65,17 @@ main = do
               . over _jmarketprices (++ [mp])
               $ j
 
-        header = printf "; (last updated %s)\n"
-                   (formatTime defaultTimeLocale "%Y/%m/%d %H:%M:%S" t)
+        heading = printf "; (last updated %s)\n"
+                    (formatTime defaultTimeLocale "%Y/%m/%d %H:%M:%S" t)
         outstr = T.intercalate "\n"
                . ("; Historical commodity market prices" :)
-               . (T.pack header :)
+               . (T.pack heading :)
                . flip M.foldMapWithKey mpmap $ \k mps ->
                    [ T.unlines $ ("; " <> k)
                                : map (T.pack . showMarketPrice) mps
                    ]
 
-    T.writeFile commoditiesPath outstr
+    T.writeFile pricesPath outstr
     putStrLn "Updated with new market price:"
     putStrLn $ showMarketPrice mp
 
