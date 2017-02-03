@@ -6,6 +6,12 @@ resolver: lts-7.10
 # Local packages, usually specified by relative directory name
 packages:
 - '.'
+- location:
+    git: https://github.com/mstksg/hledger.git
+    commit: eea2054efc7d6581033f47a166cb7cfbd237b888
+  subdirs:
+  - hledger-lib
+  extra-dep: true
 
 # Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
 extra-deps: []
