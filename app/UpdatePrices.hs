@@ -49,12 +49,18 @@ instance ToJSON Spot where
 pricesPath :: FilePath
 pricesPath = "/home/justin/.hledger/prices.journal"
 
+getCoinbasePrices :: LocalTime -> T.Text -> IO MarketPrice
+getCoinbasePrices t tk = do
+    r <- getWith defaults . T.unpack $
+        "https://api.coinbase.com/v2/prices/" <> tk <> "-USD/spot"
+    let Just (Spot{..}) = r ^? responseBody . key "data" . _JSON
+    return $ MarketPrice (localDay t) tk (usd (realToFrac _spotAmount))
+
+
 main :: IO ()
 main = do
     t <- zonedTimeToLocalTime <$> getZonedTime
-    r <- getWith defaults "https://api.coinbase.com/v2/prices/BTC-USD/spot"
-    let Just (Spot{..}) = r ^? responseBody . key "data" . _JSON
-        mp = MarketPrice (localDay t) "BTC" (usd (realToFrac _spotAmount))
+    newMPs <- traverse (getCoinbasePrices t) ["BTC","LTC"]
 
     Right j <- readJournalFile Nothing Nothing True pricesPath
     let mpmap = fmap (sortNubWith mpdate . ($ []))
@@ -62,7 +68,7 @@ main = do
               . map (\p -> (mpcommodity p, (++ [p])))
               . jmarketprices
               . journalApplyCommodityStyles
-              . over _jmarketprices (++ [mp])
+              . over _jmarketprices (++ newMPs)
               $ j
 
         heading = printf "; (last updated %s)\n"
@@ -76,8 +82,8 @@ main = do
                    ]
 
     T.writeFile pricesPath outstr
-    putStrLn "Updated with new market price:"
-    putStrLn $ showMarketPrice mp
+    putStrLn "Updated with new market price(s):"
+    mapM_ (putStrLn . showMarketPrice) newMPs
 
 _jmarketprices :: Lens' Journal [MarketPrice]
 _jmarketprices f j = f (jmarketprices j) <&> \ps ->

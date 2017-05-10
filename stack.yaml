@@ -1,17 +1,11 @@
 # For more information, see: http://docs.haskellstack.org/en/stable/yaml_configuration.html
 
 # Specifies the GHC version and set of packages available (e.g., lts-3.5, nightly-2015-09-21, ghc-7.10.2)
-resolver: lts-7.10
+resolver: nightly-2017-05-07
 
 # Local packages, usually specified by relative directory name
 packages:
 - '.'
-- location:
-    git: https://github.com/mstksg/hledger.git
-    commit: 98057fb36d631a5e9742b5dcf11fd47572c5c95b
-  subdirs:
-  - hledger-lib
-  extra-dep: true
 
 # Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
 extra-deps: []
