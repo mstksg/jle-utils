@@ -53,16 +53,17 @@ getCoinbasePrices :: LocalTime -> T.Text -> IO MarketPrice
 getCoinbasePrices t tk = do
     r <- getWith defaults . T.unpack $
         "https://api.coinbase.com/v2/prices/" <> tk <> "-USD/spot"
-    let Just (Spot{..}) = r ^? responseBody . key "data" . _JSON
+    let Just Spot{..} = r ^? responseBody . key "data" . _JSON
     return $ MarketPrice (localDay t) tk (usd (realToFrac _spotAmount))
 
 
 main :: IO ()
 main = do
     t <- zonedTimeToLocalTime <$> getZonedTime
-    newMPs <- traverse (getCoinbasePrices t) ["BTC","LTC"]
+    newMPs <- traverse (getCoinbasePrices t) ["BTC","ETH","LTC","BCH"]
 
-    Right j <- readJournalFile Nothing Nothing True pricesPath
+    j <- either error id
+       <$> readJournalFile Nothing Nothing True pricesPath
     let mpmap = fmap (sortNubWith mpdate . ($ []))
               . M.fromListWith (.)
               . map (\p -> (mpcommodity p, (++ [p])))
