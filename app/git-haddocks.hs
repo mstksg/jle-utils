@@ -11,7 +11,6 @@ import           Control.Monad.IO.Class
 import           Control.Monad.Logger
 import           Data.Aeson.TH
 import           Data.Char
-import           Data.Monoid
 import           GHC.Generics
 import           JUtils.GHPages
 import           Options.Applicative

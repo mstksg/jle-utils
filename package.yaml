@@ -1,0 +1,81 @@
+name: jle-utils
+version: '0.1.1.0'
+synopsis: Suite of general utility scripts I use to navigate life.
+description: Please see README.md
+category: Web
+author: Justin Le
+maintainer: justin@jle.im
+copyright: (c) Justin Le 2016
+license: BSD3
+github: mstksg/jle-utils
+homepage: http://github.com/mstksg/jle-utils#readme
+dependencies:
+- base
+- conduit-combinators
+- directory
+- exceptions
+- filepath
+- gitlib
+- gitlib-libgit2
+- monad-logger
+- tagged
+- text
+- time
+- transformers
+library:
+  source-dirs: src
+  ghc-options: -Wall
+  exposed-modules:
+  - JUtils.GHPages
+  dependencies:
+  - transformers-base
+  - conduit
+executables:
+  jle-git-haddocks:
+    main: git-haddocks.hs
+    source-dirs: app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Wall
+    dependencies:
+    - aeson
+    - conduit
+    - jle-utils
+    - optparse-applicative
+    - process
+    - unordered-containers
+    - yaml
+  jle-update-gh-pages:
+    main: update-gh-pages.hs
+    source-dirs: app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Wall
+    dependencies:
+    - aeson
+    - conduit
+    - jle-utils
+    - optparse-applicative
+    - process
+    - unordered-containers
+    - yaml
+  jle-update-prices:
+    main: update-prices.hs
+    source-dirs: app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Wall
+    dependencies:
+    - aeson
+    - containers
+    - hledger-lib
+    - lens
+    - lens-aeson
+    - wreq
+

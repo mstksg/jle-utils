@@ -1,7 +1,6 @@
 {-# LANGUAGE RecordWildCards     #-}
 
 import Control.Monad.Logger
-import Data.Monoid
 import JUtils.GHPages
 import Options.Applicative
 

@@ -1,11 +1,18 @@
 # For more information, see: http://docs.haskellstack.org/en/stable/yaml_configuration.html
 
 # Specifies the GHC version and set of packages available (e.g., lts-3.5, nightly-2015-09-21, ghc-7.10.2)
-resolver: lts-10.3
+resolver: nightly-2018-03-26
 
 # Local packages, usually specified by relative directory name
 packages:
 - '.'
+- location:
+    git: git://github.com/mstksg/gitlib.git
+    commit: ce1fb9efcf0787e152e1e62597ddc471cb27d7e9
+    subdirs:
+    - gitlib
+    - gitlib-libgit2
+  extra-dep: true
 
 # Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
 extra-deps: []

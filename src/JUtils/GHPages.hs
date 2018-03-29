@@ -1,3 +1,4 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE MultiWayIf          #-}
 {-# LANGUAGE OverloadedStrings   #-}
@@ -15,14 +16,12 @@ import           Control.Monad.Catch
 import           Control.Monad.IO.Class
 import           Control.Monad.Logger
 import           Control.Monad.Trans.Class
-import           Control.Monad.Trans.Control
 import           Control.Monad.Trans.Maybe
 import           Data.Foldable
 import           Data.Maybe
-import           Data.Monoid
 import           Data.Tagged
-import           Data.Time.LocalTime
 import           Data.Time.Format
+import           Data.Time.LocalTime
 import           Git.Libgit2
 import           Git.Reference
 import           Git.Repository
@@ -32,9 +31,9 @@ import           Git.Types
 import           System.Directory
 import           System.FilePath
 import           Text.Printf
-import qualified Conduit                     as C
-import qualified Data.Text                   as T
-import qualified Data.Text.Encoding          as T
+import qualified Conduit                        as C
+import qualified Data.Text                      as T
+import qualified Data.Text.Encoding             as T
 
 ghPagesRef :: T.Text
 ghPagesRef = "refs/heads/gh-pages"
@@ -63,7 +62,7 @@ updatePages' level fromDir toDir =
 
 -- | Replaces the gh-pages branch with the contents of the given directory.
 updatePagesLogging
-    :: (MonadMask m, MonadLogger m, MonadIO m, MonadBaseControl IO m)
+    :: (MonadMask m, MonadLogger m, MonadIO m, C.MonadUnliftIO m)
     => FilePath         -- ^ The directory to copy over
     -> Maybe FilePath   -- ^ Optional: root directory of gh-pages copy
     -> m ()
@@ -113,8 +112,8 @@ updatePagesLogging fromDir toDir = do
 
 
 getPagesRef
-    :: forall r m. (MonadGit r m, MonadLogger m, MonadThrow m)
-    => m (Oid r)
+    :: forall m. (MonadLogger m, MonadThrow m, MonadMask m, C.MonadUnliftIO m, HasLgRepo m)
+    => m OidPtr
 getPagesRef = do
     rPages <- resolveReference ghPagesRef
     case rPages of
@@ -161,5 +160,5 @@ buildPagesTree rt br = go ""
           | isDirectory -> do
               lift . logDebugN $ "Descending down directory " <> T.pack fullFn
               go bn'
-          | otherwise -> do
+          | otherwise ->
               liftIO . putStrLn $ "Bad file: " ++ fullFn

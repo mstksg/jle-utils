@@ -10,7 +10,6 @@ import           Data.Aeson.Lens
 import           Data.Aeson.Types
 import           Data.Fixed
 import           Data.Foldable
-import           Data.Monoid
 import           Data.Time.Format
 import           Data.Time.LocalTime
 import           GHC.Generics             (Generic)
