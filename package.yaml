@@ -11,25 +11,23 @@ github: mstksg/jle-utils
 homepage: http://github.com/mstksg/jle-utils#readme
 dependencies:
 - base
-- conduit-combinators
-- directory
-- exceptions
-- filepath
-- gitlib
-- gitlib-libgit2
-- monad-logger
-- tagged
-- text
-- time
-- transformers
 library:
   source-dirs: src
   ghc-options: -Wall
   exposed-modules:
   - JUtils.GHPages
   dependencies:
-  - transformers-base
   - conduit
+  - directory
+  - exceptions
+  - filepath
+  - gitlib
+  - gitlib-libgit2
+  - monad-logger
+  - tagged
+  - text
+  - time
+  - transformers
 executables:
   jle-git-haddocks:
     main: git-haddocks.hs
@@ -41,10 +39,14 @@ executables:
     - -Wall
     dependencies:
     - aeson
-    - conduit
+    - directory
+    - exceptions
+    - filepath
     - jle-utils
+    - monad-logger
     - optparse-applicative
     - process
+    - text
     - unordered-containers
     - yaml
   jle-update-gh-pages:
@@ -56,13 +58,9 @@ executables:
     - -with-rtsopts=-N
     - -Wall
     dependencies:
-    - aeson
-    - conduit
     - jle-utils
+    - monad-logger
     - optparse-applicative
-    - process
-    - unordered-containers
-    - yaml
   jle-update-prices:
     main: update-prices.hs
     source-dirs: app
@@ -77,5 +75,21 @@ executables:
     - hledger-lib
     - lens
     - lens-aeson
+    - text
+    - time
     - wreq
-
+  jle-git-tintin:
+    main: git-tintin.hs
+    source-dirs: app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Wall
+    dependencies:
+    - directory
+    - filepath
+    - jle-utils
+    - monad-logger
+    - optparse-applicative
+    - process

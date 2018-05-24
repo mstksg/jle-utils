@@ -5,32 +5,16 @@
 {-# LANGUAGE TemplateHaskell     #-}
 {-# LANGUAGE TypeFamilies        #-}
 
-import           Control.Exception
-import           Control.Monad.Catch
 import           Control.Monad.IO.Class
 import           Control.Monad.Logger
-import           Data.Aeson.TH
-import           Data.Char
-import           GHC.Generics
 import           JUtils.GHPages
 import           Options.Applicative
 import           System.Directory
 import           System.FilePath
 import           System.Process
-import qualified Data.HashMap.Strict as H
-import qualified Data.Text           as T
-import qualified Data.Text.Encoding  as T
-import qualified Data.Yaml           as Y
 
 -- TODO: Make linking work for haddocks, to basically link to correct stack
 -- snapshot documentation i guess?
-
-data LocalInfo = LI { _liPath    :: String
-                    , _liVersion :: String
-                    }
-  deriving (Show, Eq, Generic)
-
-$(deriveJSON defaultOptions{fieldLabelModifier = drop 3 . map toLower } ''LocalInfo)
 
 data Opts = O { oLogLevel :: LogLevel
               , oDirBase  :: Maybe FilePath
@@ -69,27 +53,10 @@ main = do
     runStderrLoggingT . filterLogger (\_ l -> l >= oLogLevel) $ do
       -- assumes project is root.
       -- TODO: fix this
-      projNameVer <- liftIO $ do
-        projName <- takeBaseName <$> getCurrentDirectory
+      currDir <- liftIO getCurrentDirectory
+      logDebugN "Rebuilding tintin"
+      liftIO $ callCommand "tintin --verbose"
 
-        localsData <- fmap _liVersion
-                    . (H.lookup projName =<<)
-                    . Y.decode
-                    . T.encodeUtf8
-                    . T.pack
-                  <$> readCreateProcess (shell "stack query locals") ""
-
-        case localsData of
-          Nothing -> throwM $ ErrorCall "Could not resolve project version."
-          Just v  -> return $ projName ++ "-" ++ v
-
-      logDebugN ("Resolved project name and version: " <> T.pack projNameVer)
-
-      logDebugN "Rebuilding haddocks"
-      dr <- liftIO $ do
-          callCommand "stack haddock"
-          readCreateProcess (shell "stack path --local-doc-root") ""
-
-      let docRoot = zipWith const dr (drop 1 dr) </> projNameVer
+      let docRoot = currDir </> ".stack-work/tintin/rendered"
 
       updatePagesLogging docRoot oDirBase
