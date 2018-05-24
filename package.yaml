@@ -11,6 +11,8 @@ github: mstksg/jle-utils
 homepage: http://github.com/mstksg/jle-utils#readme
 dependencies:
 - base
+ghc-options:
+- -fwarn-redundant-constraints
 library:
   source-dirs: src
   ghc-options: -Wall
@@ -61,6 +63,7 @@ executables:
     - jle-utils
     - monad-logger
     - optparse-applicative
+    - text
   jle-update-prices:
     main: update-prices.hs
     source-dirs: app
@@ -93,3 +96,4 @@ executables:
     - monad-logger
     - optparse-applicative
     - process
+    - text

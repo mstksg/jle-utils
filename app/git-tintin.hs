@@ -1,8 +1,6 @@
-{-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell     #-}
 {-# LANGUAGE TypeFamilies        #-}
 
 import           Control.Monad.IO.Class
@@ -12,12 +10,14 @@ import           Options.Applicative
 import           System.Directory
 import           System.FilePath
 import           System.Process
+import qualified Data.Text              as T
 
 -- TODO: Make linking work for haddocks, to basically link to correct stack
 -- snapshot documentation i guess?
 
 data Opts = O { oLogLevel :: LogLevel
               , oDirBase  :: Maybe FilePath
+              , oCNAME    :: Maybe String
               }
   deriving (Show, Eq)
 
@@ -41,6 +41,14 @@ parseOpts = O <$> ( flag' LevelDebug
                       <> help "Directory root in gh-pages to place haddock files in"
                        )
                     )
+              <*> optional
+                    (strOption
+                       ( short 'c'
+                      <> long "cname"
+                      <> metavar "DOMAIN"
+                      <> help "Contents of CNAME file, indicating custom github domain"
+                       )
+                    )
 
 main :: IO ()
 main = do
@@ -59,4 +67,4 @@ main = do
 
       let docRoot = currDir </> ".stack-work/tintin/rendered"
 
-      updatePagesLogging docRoot oDirBase
+      updatePagesLogging docRoot oDirBase (T.pack <$> oCNAME)

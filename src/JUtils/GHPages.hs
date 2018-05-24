@@ -42,6 +42,7 @@ ghPagesRef = "refs/heads/gh-pages"
 updatePages
     :: FilePath         -- ^ The directory to copy over
     -> Maybe FilePath   -- ^ Optional: root directory of gh-pages copy
+    -> Maybe T.Text     -- ^ CNAME contents
     -> IO ()
 updatePages = updatePages' LevelInfo
 
@@ -54,9 +55,10 @@ updatePages'
     :: LogLevel
     -> FilePath         -- ^ The directory to copy over
     -> Maybe FilePath   -- ^ Optional: root directory of gh-pages copy
+    -> Maybe T.Text     -- ^ CNAME contents
     -> IO ()
-updatePages' level fromDir toDir =
-    runStderrLoggingT . getOnMy level $ updatePagesLogging fromDir toDir
+updatePages' level fromDir toDir cname =
+    runStderrLoggingT . getOnMy level $ updatePagesLogging fromDir toDir cname
   where
     getOnMy lev = filterLogger (\_ l -> l >= lev)
 
@@ -65,8 +67,9 @@ updatePagesLogging
     :: (MonadMask m, MonadLogger m, MonadIO m, C.MonadUnliftIO m)
     => FilePath         -- ^ The directory to copy over
     -> Maybe FilePath   -- ^ Optional: root directory of gh-pages copy
+    -> Maybe T.Text     -- ^ CNAME contents
     -> m ()
-updatePagesLogging fromDir toDir = do
+updatePagesLogging fromDir toDir cname = do
     now <- liftIO getZonedTime
 
     let tStr    = formatTime defaultTimeLocale "%c" now
@@ -75,7 +78,9 @@ updatePagesLogging fromDir toDir = do
     C.runResourceT . withRepository lgFactory "./" $ do
       r <- getPagesRef
       c <- lookupCommit $ Tagged r
-      toid <- createTree (buildPagesTree fromDir (fromMaybe "" toDir))
+      toid <- createTree $ do
+          buildPagesTree fromDir (fromMaybe "" toDir)
+          mapM_ addCNAME cname
 
       tEnts <- listTreeEntries =<< lookupTree toid
       logDebugN . T.pack $ printf "Built tree with %d files."
@@ -83,7 +88,7 @@ updatePagesLogging fromDir toDir = do
 
       if toid /= commitTree c
         then do
-          logDebugN ("Creating commit")
+          logDebugN "Creating commit"
           c' <- createCommit [commitOid c]
                              toid
                              (commitAuthor c)    { signatureWhen = now }
@@ -91,7 +96,7 @@ updatePagesLogging fromDir toDir = do
                              commitMsg
                              (Just ghPagesRef)
 
-          logInfoN ("Updating gh-pages branch")
+          logInfoN "Updating gh-pages branch"
           updateReference ghPagesRef (commitRefTarget c')
           let hash = T.take 7 . renderObjOid $ commitOid c'
           logInfoN ("Succesfully updated branch to " <> hash)
@@ -125,7 +130,7 @@ getPagesRef = do
           Nothing -> throwM
                    $ ErrorCall "No reference \"HEAD\" or \"master\" to create gh-pages branch from."
           Just r -> do
-            logWarnN $ "Creating branch gh-pages"
+            logWarnN "Creating branch gh-pages"
             createReference ghPagesRef (RefObj r)
 
             rPages' <- resolveReference ghPagesRef
@@ -162,3 +167,11 @@ buildPagesTree rt br = go ""
               go bn'
           | otherwise ->
               liftIO . putStrLn $ "Bad file: " ++ fullFn
+
+addCNAME
+    :: (C.MonadResource m, MonadIO m, MonadLogger m, MonadGit r m)
+    => T.Text
+    -> TreeT r m ()
+addCNAME cname = do
+    boid <- lift . createBlob $ BlobString (T.encodeUtf8 cname)
+    putBlob "CNAME" boid

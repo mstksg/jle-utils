@@ -34,6 +34,7 @@ $(deriveJSON defaultOptions{fieldLabelModifier = drop 3 . map toLower } ''LocalI
 
 data Opts = O { oLogLevel :: LogLevel
               , oDirBase  :: Maybe FilePath
+              , oCNAME    :: Maybe String
               }
   deriving (Show, Eq)
 
@@ -55,6 +56,14 @@ parseOpts = O <$> ( flag' LevelDebug
                       <> long "directory"
                       <> metavar "DIR"
                       <> help "Directory root in gh-pages to place haddock files in"
+                       )
+                    )
+              <*> optional
+                    (strOption
+                       ( short 'c'
+                      <> long "cname"
+                      <> metavar "DOMAIN"
+                      <> help "Contents of CNAME file, indicating custom github domain"
                        )
                     )
 
@@ -92,4 +101,4 @@ main = do
 
       let docRoot = zipWith const dr (drop 1 dr) </> projNameVer
 
-      updatePagesLogging docRoot oDirBase
+      updatePagesLogging docRoot oDirBase (T.pack <$> oCNAME)
