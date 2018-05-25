@@ -76,7 +76,7 @@ executables:
     - aeson
     - containers
     - data-default
-    - hledger-lib
+    - hledger-lib >= 1.9
     - lens
     - lens-aeson
     - text
