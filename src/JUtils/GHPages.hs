@@ -64,7 +64,7 @@ updatePages' level fromDir toDir cname =
 
 -- | Replaces the gh-pages branch with the contents of the given directory.
 updatePagesLogging
-    :: (MonadMask m, MonadLogger m, MonadIO m, C.MonadUnliftIO m)
+    :: (MonadMask m, MonadLogger m, C.MonadUnliftIO m)
     => FilePath         -- ^ The directory to copy over
     -> Maybe FilePath   -- ^ Optional: root directory of gh-pages copy
     -> Maybe T.Text     -- ^ CNAME contents
@@ -117,7 +117,7 @@ updatePagesLogging fromDir toDir cname = do
 
 
 getPagesRef
-    :: forall m. (MonadLogger m, MonadThrow m, MonadMask m, C.MonadUnliftIO m, HasLgRepo m)
+    :: forall m. (MonadLogger m, MonadMask m, C.MonadUnliftIO m, HasLgRepo m)
     => m OidPtr
 getPagesRef = do
     rPages <- resolveReference ghPagesRef
@@ -142,7 +142,7 @@ getPagesRef = do
 
 
 buildPagesTree
-    :: forall m r. (C.MonadResource m, MonadIO m, MonadLogger m, MonadGit r m)
+    :: forall m r. (C.MonadResource m, MonadLogger m, MonadGit r m)
     => FilePath
     -> FilePath
     -> TreeT r m ()
@@ -169,7 +169,7 @@ buildPagesTree rt br = go ""
               liftIO . putStrLn $ "Bad file: " ++ fullFn
 
 addCNAME
-    :: (C.MonadResource m, MonadIO m, MonadLogger m, MonadGit r m)
+    :: (C.MonadResource m, MonadGit r m)
     => T.Text
     -> TreeT r m ()
 addCNAME cname = do

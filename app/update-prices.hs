@@ -8,6 +8,7 @@ import           Control.Lens
 import           Data.Aeson
 import           Data.Aeson.Lens
 import           Data.Aeson.Types
+import           Data.Default
 import           Data.Fixed
 import           Data.Foldable
 import           Data.Time.Format
@@ -62,7 +63,7 @@ main = do
     newMPs <- traverse (getCoinbasePrices t) ["BTC","ETH","LTC","BCH"]
 
     j <- either error id
-       <$> readJournalFile Nothing Nothing True pricesPath
+       <$> readJournalFile def pricesPath
     let mpmap = fmap (sortNubWith mpdate . ($ []))
               . M.fromListWith (.)
               . map (\p -> (mpcommodity p, (++ [p])))

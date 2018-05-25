@@ -75,6 +75,7 @@ executables:
     dependencies:
     - aeson
     - containers
+    - data-default
     - hledger-lib
     - lens
     - lens-aeson
