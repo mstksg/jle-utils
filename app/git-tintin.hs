@@ -63,7 +63,7 @@ main = do
       -- TODO: fix this
       currDir <- liftIO getCurrentDirectory
       logDebugN "Rebuilding tintin"
-      liftIO $ callCommand "tintin --verbose"
+      liftIO $ callCommand "tintin run"
 
       let docRoot = currDir </> ".stack-work/tintin/rendered"
 
