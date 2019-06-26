@@ -3,6 +3,7 @@
 {-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell     #-}
+{-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE TypeFamilies        #-}
 
 import           Control.Exception
@@ -81,12 +82,12 @@ main = do
       projNameVer <- liftIO $ do
         projName <- takeBaseName <$> getCurrentDirectory
 
-        localsData <- fmap _liVersion
-                    . (H.lookup projName =<<)
-                    . Y.decode
-                    . T.encodeUtf8
-                    . T.pack
-                  <$> readCreateProcess (shell "stack query locals") ""
+        localsMap <- Y.decodeThrow @_ @(H.HashMap String LocalInfo)
+                   . T.encodeUtf8
+                   . T.pack
+                 =<< readCreateProcess (shell "stack query locals") ""
+
+        let localsData = _liVersion <$> H.lookup projName localsMap
 
         case localsData of
           Nothing -> throwM $ ErrorCall "Could not resolve project version."

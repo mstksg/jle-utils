@@ -1,7 +1,7 @@
 # For more information, see: http://docs.haskellstack.org/en/stable/yaml_configuration.html
 
 # Specifies the GHC version and set of packages available (e.g., lts-3.5, nightly-2015-09-21, ghc-7.10.2)
-resolver: nightly-2019-02-07
+resolver: nightly-2019-06-20
 
 # Local packages, usually specified by relative directory name
 packages:
@@ -11,6 +11,10 @@ packages:
 extra-deps:
 - gitlib-3.1.2
 - gitlib-libgit2-3.1.2.1
+- github-0.22
+- binary-instances-1
+- functor-combinators-0.1.0.1
+- trivial-constraint-0.5.1.0
 
 # Override default flag values for local packages and extra-deps
 flags: {}

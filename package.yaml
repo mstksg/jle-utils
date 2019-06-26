@@ -10,6 +10,8 @@ license:          BSD3
 github:           mstksg/jle-utils
 homepage:         http://github.com/mstksg/jle-utils#readme
 
+tested-with:      GHC >= 8.0
+
 dependencies:
 - base
 
@@ -20,17 +22,30 @@ ghc-options:
 library:
   source-dirs: src
   dependencies:
+  - Cabal
   - conduit
   - directory
   - exceptions
+  - vector
   - filepath
   - gitlib
   - gitlib-libgit2
   - monad-logger
+  - mtl
   - tagged
   - text
+  - aeson
   - time
   - transformers
+  - yaml
+  - lens-aeson
+  - lens
+  - containers
+  - functor-combinators
+  - github
+  - base64-bytestring
+  - bytestring
+  - mmorph
 
 executables:
   jle-git-haddocks:
@@ -96,3 +111,15 @@ executables:
     - optparse-applicative
     - process
     - text
+  jle-travis-stack:
+    main: travis-stack.hs
+    source-dirs: app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - yaml
+    - jle-utils
+    - Cabal
+    - containers
