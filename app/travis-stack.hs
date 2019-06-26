@@ -1,5 +1,6 @@
-{-# LANGUAGE LambdaCase      #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE LambdaCase       #-}
+{-# LANGUAGE RecordWildCards  #-}
+{-# LANGUAGE TypeApplications #-}
 
 import           Control.Exception
 import           Data.Function
@@ -10,7 +11,10 @@ import           Distribution.Types.Version
 import           Distribution.Types.VersionRange
 import           Distribution.Verbosity
 import           JUtils.Cabal
+import           JUtils.Cache
+import           JUtils.Github
 import           JUtils.Stackage
+import qualified Data.Map                        as M
 
 versionRange :: IO VersionRange
 versionRange = maybe (throwIO (userError e)) pure
@@ -21,8 +25,8 @@ versionRange = maybe (throwIO (userError e)) pure
   where
     e = "No version range for GHC found in 'tested-with' field."
 
-majorsInRange :: VersionRange -> GHCFull -> Bool
-majorsInRange = cataVersionRange $ \case
+majorInRange :: VersionRange -> GHCFull -> Bool
+majorInRange = cataVersionRange $ \case
     AnyVersionF                 -> \_ -> True
     ThisVersionF v              -> (versionFull v ==) . Just
     LaterVersionF v             -> \g -> maybe False (<  g) $ versionFull v
@@ -48,5 +52,13 @@ majorsInRange = cataVersionRange $ \case
 main :: IO ()
 main = do
     rng <- versionRange
-    print rng
-
+    vi <- withCache @VersionInfo False "travis-stack-lts-bounds" $ do
+      putStrLn "Populating LTS version cache..."
+      e <- runGithub versionInfo
+      case e of
+        Left e' -> throwIO e'
+        Right x -> pure x
+    let mp = M.filterWithKey (goodVI rng) . viMap $ vi
+    print mp
+  where
+    goodVI rng mj (mn, _) = majorInRange rng (GHCFull mj mn)

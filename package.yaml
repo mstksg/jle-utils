@@ -32,6 +32,7 @@ library:
   - gitlib-libgit2
   - monad-logger
   - mtl
+  - haskeline
   - tagged
   - text
   - aeson
@@ -44,6 +45,7 @@ library:
   - functor-combinators
   - github
   - base64-bytestring
+  - binary
   - bytestring
   - mmorph
 
@@ -123,3 +125,4 @@ executables:
     - jle-utils
     - Cabal
     - containers
+    - directory

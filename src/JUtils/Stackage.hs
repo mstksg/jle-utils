@@ -1,5 +1,6 @@
 {-# LANGUAGE AllowAmbiguousTypes       #-}
 {-# LANGUAGE ConstraintKinds           #-}
+{-# LANGUAGE DeriveGeneric             #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE OverloadedStrings         #-}
 {-# LANGUAGE RecordWildCards           #-}
@@ -21,41 +22,48 @@ import           Control.Lens
 import           Control.Monad.Except
 import           Data.Aeson.Lens
 import           Data.Bifunctor
-import           Data.ByteString                           (ByteString)
+import           Data.ByteString        (ByteString)
 import           Data.Char
 import           Data.Foldable
-import           Data.Map                                  (Map)
+import           Data.Map               (Map)
 import           Data.Maybe
 import           Data.Proxy
 import           Data.Semigroup
-import           Data.Set                                  (Set)
-import           Data.Text                                 (Text)
+import           Data.Set               (Set)
+import           Data.Text              (Text)
+import           GHC.Generics
 import           JUtils.Github
 import           Numeric.Natural
 import           Text.Printf
-import           Text.Read                                 (readMaybe)
-import qualified Data.ByteString.Base64                    as B64
-import qualified Data.Map                                  as M
-import qualified Data.Set                                  as S
-import qualified Data.Text                                 as T
-import qualified Data.Text.Encoding                        as T
-import qualified Data.Yaml                                 as Y
-import qualified GitHub                                    as G
+import           Text.Read              (readMaybe)
+import qualified Data.Binary            as Bi
+import qualified Data.ByteString.Base64 as B64
+import qualified Data.Map               as M
+import qualified Data.Set               as S
+import qualified Data.Text              as T
+import qualified Data.Text.Encoding     as T
+import qualified Data.Yaml              as Y
+import qualified GitHub                 as G
 
 data GHCMajor = GHCMajor { gmA :: Int, gmB :: Int }
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord, Generic)
 
 data GHCFull  = GHCFull { gfMajor :: GHCMajor, gfMinor :: Int }
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord, Generic)
 
 data Resolver = LTS Natural
               | Nightly
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord, Generic)
 
 newtype VersionInfo = VI
     { viMap :: Map GHCMajor (Int, Set Resolver)
     }
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord, Generic)
+
+instance Bi.Binary GHCMajor
+instance Bi.Binary GHCFull
+instance Bi.Binary Resolver
+instance Bi.Binary VersionInfo
 
 ghOwner :: G.Name G.Owner
 ghOwner = "commercialhaskell"
