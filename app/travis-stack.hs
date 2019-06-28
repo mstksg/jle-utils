@@ -47,13 +47,16 @@ import qualified Text.Megaparsec                 as P
 import qualified Text.Megaparsec.Char.Lexer      as P
 
 versionRange :: IO VersionRange
-versionRange = maybe (throwIO (userError e)) pure
+versionRange = maybe recoop pure
              . lookup GHC
              . testedWith
              . packageDescription
            =<< loadPackageDescription normal
   where
-    e = "No version range for GHC found in 'tested-with' field."
+    recoop = do
+      putStrLn "Warning: No version range for GHC found in tested-with field."
+      putStrLn "Using AnyVersion, but please specify an explicit range for the benefit of users."
+      pure anyVersion
 
 majorInRange :: VersionRange -> GHCFull -> Bool
 majorInRange = cataVersionRange $ \case
