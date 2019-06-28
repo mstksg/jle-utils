@@ -1,4 +1,5 @@
 {-# LANGUAGE ApplicativeDo       #-}
+{-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE RecordWildCards     #-}
@@ -17,7 +18,9 @@ import           Data.Aeson
 import           Data.Aeson.Lens
 import           Data.Foldable
 import           Data.Function
+import           Data.Map                        (Map)
 import           Data.Maybe hiding               (mapMaybe)
+import           Data.Set                        (Set)
 import           Data.Text                       (Text)
 import           Data.Void
 import           Data.Witherable
@@ -26,10 +29,16 @@ import           Distribution.PackageDescription
 import           Distribution.Types.Version
 import           Distribution.Types.VersionRange
 import           Distribution.Verbosity
+import           GHC.Generics                    (Generic)
 import           JUtils.Cabal
 import           JUtils.Github
 import           JUtils.Stackage
 import           Network.Curl
+import           System.Directory
+import           System.FilePath
+import           System.Process
+import qualified Data.Map                        as M
+import qualified Data.Set                        as S
 import qualified Data.Text                       as T
 import qualified Data.Text.Encoding              as T
 import qualified Data.Text.IO                    as T
@@ -88,6 +97,13 @@ modifyInclude rng i = runMaybeT $ do
     guard $ majorInRange rng cmp
     pure i
 
+modifyDeps :: Set Text -> Include -> Include
+modifyDeps ds i
+    | Just "osx" <- includeOS i = i
+    | otherwise                 = i & pkg . _Just <>~ S.toList ds
+  where
+    pkg f j = (\p -> j { includePackages = p }) <$> f (includePackages j)
+
 ctCompiler
     :: CompilerType
     -> IO GHCFull
@@ -110,6 +126,13 @@ main = do
     tyaml <- withCurlDo $ do
       (_,tfull) <- curlGetString templateUrl []
       Y.decodeThrow @_ @Object . T.encodeUtf8 . T.pack $ tfull
+    Config{..} <- Y.decodeFileThrow @_ @Config . (</> "travis-stack.yaml") =<<
+        getXdgDirectory XdgConfig "jle-utils"
+    deps <- stackDeps
+    let extraDeps = foldMap ( fold
+                            . (`M.lookup` cfgExtraAptDeps)
+                            )
+                        deps
     modified <- tyaml
               & witherOf ( ix  "matrix"
                          . key "include"
@@ -117,9 +140,17 @@ main = do
                          . wither
                          . floop
                          )
-                (modifyInclude rng)
+                (modifyInclude rng . modifyDeps extraDeps)
     T.putStrLn . T.decodeUtf8 $ Y.encode modified
 
+data Config = Config
+    { cfgExtraAptDeps :: Map Text (Set Text) }
+  deriving Generic
+
+instance FromJSON Config where
+    parseJSON = genericParseJSON defaultOptions
+        { fieldLabelModifier = camelTo2 '-' . drop 3
+        }
 
 currentResolver :: IO Resolver
 currentResolver = do
@@ -146,6 +177,12 @@ currentHead = do
        $ tfull
   where
     acUrl = "https://raw.githubusercontent.com/ghc/ghc/master/configure.ac"
+
+stackDeps :: IO (Set Text)
+stackDeps = S.fromList
+          . mapMaybe (fmap T.pack . listToMaybe . words)
+          . lines
+        <$> readCreateProcess (shell "stack --test --bench ls dependencies") ""
 
 
 data StackSpecial = SSNightly
@@ -208,7 +245,7 @@ instance FromJSON Include where
                    . key "sources"
                    . _JSON
         includeOS <- pure $
-                o ^? ix  "osx"
+                o ^? ix  "os"
                    . _JSON
         pure $ Include{..}
 

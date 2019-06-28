@@ -125,19 +125,21 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - Cabal
+    - aeson
     - containers
+    - curl
     - directory
     - file-embed
+    - filepath
     - jle-utils
-    - yaml
-    - template-haskell
-    - curl
-    - witherable
     - lens
     - lens-aeson
-    - unordered-containers
-    - aeson
-    - text
     - megaparsec
-    - transformers
     - mtl
+    - process
+    - template-haskell
+    - text
+    - transformers
+    - unordered-containers
+    - witherable
+    - yaml
