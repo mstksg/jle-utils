@@ -17,7 +17,6 @@ import           Control.Monad.Trans.Maybe
 import           Data.Aeson
 import           Data.Aeson.Lens
 import           Data.Foldable
-import           Data.Function
 import           Data.Map                        (Map)
 import           Data.Maybe hiding               (mapMaybe)
 import           Data.Set                        (Set)
@@ -58,30 +57,10 @@ versionRange = maybe recoop pure
       putStrLn "Using AnyVersion, but please specify an explicit range for the benefit of users."
       pure anyVersion
 
-majorInRange :: VersionRange -> GHCFull -> Bool
-majorInRange = cataVersionRange $ \case
-    AnyVersionF                 -> \_ -> True
-    ThisVersionF v              -> (versionFull v ==) . Just
-    LaterVersionF v             -> \g -> maybe False (<  g) $ versionFull v
-    OrLaterVersionF v           -> \g -> maybe False (<= g) $ versionFull v
-    EarlierVersionF v           -> \g -> maybe False (>  g) $ versionFull v
-    OrEarlierVersionF v         -> \g -> maybe False (>= g) $ versionFull v
-    WildcardVersionF v          -> \g -> maybe False (((==) `on` gmA . gfMajor) g)
-                                 $ versionFull v
-    MajorBoundVersionF v        -> \g -> fromMaybe False $ do
-      vv  <- versionFull v
-      vv' <- versionFull (majorUpperBound v)
-      pure $ g >= vv && g < vv'
-    UnionVersionRangesF x y     -> \g -> x g || y g
-    IntersectVersionRangesF x y -> \g -> x g && y g
-    VersionRangeParensF x       -> x
+fullInRange :: VersionRange -> GHCFull -> Bool
+fullInRange vr (GHCFull (GHCMajor x y) z) = withinRange v vr
   where
-    versionFull :: Version -> Maybe GHCFull
-    versionFull v = case versionNumbers v of
-      [x]     -> Just $ GHCFull (GHCMajor x 0) 0
-      [x,y]   -> Just $ GHCFull (GHCMajor x y) 0
-      [x,y,z] -> Just $ GHCFull (GHCMajor x y) z
-      _       -> Nothing
+    v = mkVersion [x,y,z]
 
 templateUrl :: URLString
 templateUrl = "https://raw.githubusercontent.com/commercialhaskell/stack/stable/doc/travis-complex.yml"
@@ -97,7 +76,7 @@ floop f = fmap join
 modifyInclude :: VersionRange -> Include -> IO (Maybe Include)
 modifyInclude rng i = runMaybeT $ do
     cmp <- lift (ctCompiler (includeCompiler i))
-    guard $ majorInRange rng cmp
+    guard $ fullInRange rng cmp
     pure i
 
 modifyDeps :: Set Text -> Include -> Include
