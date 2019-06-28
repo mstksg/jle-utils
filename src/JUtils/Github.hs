@@ -6,6 +6,7 @@
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE RecordWildCards            #-}
 {-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TupleSections              #-}
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeInType                 #-}
 {-# LANGUAGE TypeOperators              #-}
@@ -15,6 +16,7 @@ module JUtils.Github (
   , runGithub
   , runGithubWith
   , liftReq
+  , treeMap
   ) where
 
 import           Control.Exception
@@ -22,7 +24,11 @@ import           Control.Monad.Except
 import           Control.Monad.Morph
 import           Control.Monad.Reader
 import           Data.Aeson
+import           Data.Foldable
 import           Data.Functor.Combinator
+import           Data.Map                 (Map)
+import           Data.Maybe
+import           Data.Proxy
 import           Data.Text                (Text)
 import           GHC.Generics
 import           GitHub
@@ -30,6 +36,7 @@ import           System.Directory
 import           System.FilePath
 import           System.IO.Error
 import qualified Data.ByteString          as BS
+import qualified Data.Map                 as M
 import qualified Data.Text                as T
 import qualified Data.Text.Encoding       as T
 import qualified Data.Yaml                as Y
@@ -90,3 +97,16 @@ runGithubWith = runReaderT . runExceptT . embed (interpret go) . unGithub
 
 liftReq :: FromJSON a => Request 'RO a -> Github a
 liftReq = Github . lift . inject . (`GithubF` id)
+
+treeMap :: Tree -> Map Text (Either (Name Tree) (Name Blob))
+treeMap Tree{..} = M.fromList
+                   . mapMaybe go
+                   . toList
+                   $ treeGitTrees
+  where
+    go GitTree{..} = (gitTreePath,) <$> x
+      where
+        x | gitTreeType == "blob" = Just . Right . mkName (Proxy @Blob) $ untagName gitTreeSha
+          | gitTreeType == "tree" = Just . Left  . mkName (Proxy @Tree) $ untagName gitTreeSha
+          | otherwise             = Nothing
+

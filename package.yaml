@@ -10,7 +10,7 @@ license:          BSD3
 github:           mstksg/jle-utils
 homepage:         http://github.com/mstksg/jle-utils#readme
 
-tested-with:      GHC >= 8.0
+tested-with:      GHC >= 8.0 && < 8.9
 
 dependencies:
 - base
@@ -23,31 +23,34 @@ library:
   source-dirs: src
   dependencies:
   - Cabal
-  - conduit
-  - directory
-  - exceptions
-  - vector
-  - filepath
-  - gitlib
-  - gitlib-libgit2
-  - monad-logger
-  - mtl
-  - haskeline
-  - tagged
-  - text
   - aeson
-  - time
-  - transformers
-  - yaml
-  - lens-aeson
-  - lens
-  - containers
-  - functor-combinators
-  - github
   - base64-bytestring
   - binary
   - bytestring
+  - conduit
+  - containers
+  - curl
+  - directory
+  - exceptions
+  - filepath
+  - functor-combinators
+  - github
+  - gitlib
+  - gitlib-libgit2
+  - haskeline
+  - lens
+  - lens-aeson
+  - megaparsec
   - mmorph
+  - monad-logger
+  - mtl
+  - semigroupoids
+  - tagged
+  - text
+  - time
+  - transformers
+  - vector
+  - yaml
 
 executables:
   jle-git-haddocks:
@@ -121,8 +124,20 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - yaml
-    - jle-utils
     - Cabal
     - containers
     - directory
+    - file-embed
+    - jle-utils
+    - yaml
+    - template-haskell
+    - curl
+    - witherable
+    - lens
+    - lens-aeson
+    - unordered-containers
+    - aeson
+    - text
+    - megaparsec
+    - transformers
+    - mtl
