@@ -26,10 +26,10 @@ packages:
   original:
     hackage: github-0.22
 - completed:
-    hackage: binary-instances-1@sha256:e7768b92f34bc40cc5cabecc5c143dee6ab4bcb5eb441d58e15a0b000d64940b,2591
+    hackage: binary-instances-1@sha256:cdef50410f2797de38f021d328d38c32b2f4abeaab86bfaf78e0657150863090,2613
     pantry-tree:
       size: 1035
-      sha256: e0425d75675a23270bdf570faee30edb28d3f19ba45e166b4ce1725a7b778043
+      sha256: b58b9e7a482f158b33d87d807cd91bf99e6cd998593f4d9b11d96e978559a690
   original:
     hackage: binary-instances-1
 - completed:

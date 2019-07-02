@@ -38,9 +38,11 @@ import           System.FilePath
 import           System.Process
 import qualified Data.Map                        as M
 import qualified Data.Set                        as S
+import qualified Data.Set.NonEmpty               as NES
 import qualified Data.Text                       as T
 import qualified Data.Text.Encoding              as T
 import qualified Data.Text.IO                    as T
+import qualified Data.Vector                     as V
 import qualified Data.Yaml                       as Y
 import qualified Text.Megaparsec                 as P
 import qualified Text.Megaparsec.Char.Lexer      as P
@@ -108,25 +110,38 @@ main = do
     tyaml <- withCurlDo $ do
       (_,tfull) <- curlGetString templateUrl []
       Y.decodeThrow @_ @Object . T.encodeUtf8 . T.pack $ tfull
-    Config{..} <- Y.decodeFileThrow @_ @Config . (</> "travis-stack.yaml") =<<
+    cfg <- Y.decodeFileThrow @_ @Config . (</> "travis-stack.yaml") =<<
         getXdgDirectory XdgConfig "jle-utils"
     deps <- stackDeps
-    let extraDeps = foldMap ( fold
-                            . (`M.lookup` cfgExtraAptDeps)
-                            )
-                        deps
+    let (extraAD, extraBD) = foldMap (findDeps cfg) deps
+        installBD = case extraBD of
+          NES.IsNonEmpty s -> V.singleton . String . T.unlines . mconcat $
+            [ ["if [ `uname` = \"Darwin\" ]", "then", "  brew update"]
+            , [ "  brew install " <> d
+              | d <- toList s
+              ]
+            , ["fi"]
+            ]
+          NES.IsEmpty      -> mempty
     modified <- tyaml
+              & ix "before_install" . _Array <>~ installBD
               & witherOf ( ix  "matrix"
                          . key "include"
                          . _Array
                          . wither
                          . floop
                          )
-                (modifyInclude rng . modifyDeps extraDeps)
+                (modifyInclude rng . modifyDeps extraAD)
     T.putStrLn . T.decodeUtf8 $ Y.encode modified
+  where
+    findDeps Config{..} a = ( fold (M.lookup a cfgExtraAptDeps )
+                            , fold (M.lookup a cfgExtraBrewDeps)
+                            )
 
 data Config = Config
-    { cfgExtraAptDeps :: Map Text (Set Text) }
+    { cfgExtraAptDeps :: Map Text (Set Text)
+    , cfgExtraBrewDeps :: Map Text (Set Text)
+    }
   deriving Generic
 
 instance FromJSON Config where

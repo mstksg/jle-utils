@@ -136,10 +136,12 @@ executables:
     - lens-aeson
     - megaparsec
     - mtl
+    - nonempty-containers
     - process
     - template-haskell
     - text
     - transformers
     - unordered-containers
+    - vector
     - witherable
     - yaml
