@@ -18,13 +18,14 @@ dependencies:
 ghc-options:
 - -fwarn-redundant-constraints
 - -Wall
+- -Wcompat
+- -Werror=incomplete-patterns
 
 library:
   source-dirs: src
   dependencies:
   - Cabal
   - aeson
-  - base64-bytestring
   - binary
   - bytestring
   - conduit
@@ -44,12 +45,10 @@ library:
   - mmorph
   - monad-logger
   - mtl
-  - semigroupoids
   - tagged
   - text
   - time
   - transformers
-  - vector
   - yaml
 
 executables:
@@ -129,7 +128,6 @@ executables:
     - containers
     - curl
     - directory
-    - file-embed
     - filepath
     - jle-utils
     - lens
@@ -138,10 +136,8 @@ executables:
     - mtl
     - nonempty-containers
     - process
-    - template-haskell
     - text
     - transformers
-    - unordered-containers
     - vector
     - witherable
     - yaml

@@ -22,6 +22,9 @@ flags: {}
 # Extra package databases containing global packages
 extra-package-dbs: []
 
+ghc-options:
+  "$locals": -ddump-to-file -ddump-hi
+
 # Control whether we use the GHC we find on the path
 # system-ghc: true
 
