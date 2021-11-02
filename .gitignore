@@ -1,4 +1,4 @@
 /.stack-work
 /TAGS
 /tags
-/*.cabal
+/dist-newstyle

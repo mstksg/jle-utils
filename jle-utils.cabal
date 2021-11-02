@@ -1,0 +1,173 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 4a2f8daf5e1080ae37504ca5dfc00a9314ce72c57b9ea0bf716f0a2e7ac2b83d
+
+name:           jle-utils
+version:        0.1.1.0
+synopsis:       Suite of general utility scripts I use to navigate life.
+description:    Please see README.md
+category:       Web
+homepage:       http://github.com/mstksg/jle-utils#readme
+bug-reports:    https://github.com/mstksg/jle-utils/issues
+author:         Justin Le
+maintainer:     justin@jle.im
+copyright:      (c) Justin Le 2018
+license:        BSD3
+license-file:   LICENSE
+tested-with:
+    GHC >= 8.0
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/mstksg/jle-utils
+
+library
+  exposed-modules:
+      JUtils.Cabal
+      JUtils.Cache
+      JUtils.GHPages
+      JUtils.Github
+      JUtils.Stackage
+  other-modules:
+      Paths_jle_utils
+  hs-source-dirs:
+      src
+  ghc-options: -fwarn-redundant-constraints -Wall -Wcompat -Werror=incomplete-patterns
+  build-depends:
+      Cabal
+    , aeson
+    , base
+    , binary
+    , bytestring
+    , conduit
+    , containers
+    , curl
+    , directory
+    , exceptions
+    , filepath
+    , functor-combinators
+    , github
+    , gitlib
+    , gitlib-libgit2
+    , haskeline
+    , lens
+    , lens-aeson
+    , megaparsec
+    , mmorph
+    , monad-logger
+    , mtl
+    , tagged
+    , text
+    , time
+    , transformers
+    , yaml
+  default-language: Haskell2010
+
+executable jle-git-haddocks
+  main-is: git-haddocks.hs
+  other-modules:
+      Paths_jle_utils
+  hs-source-dirs:
+      app
+  ghc-options: -fwarn-redundant-constraints -Wall -Wcompat -Werror=incomplete-patterns -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , base
+    , directory
+    , exceptions
+    , filepath
+    , jle-utils
+    , monad-logger
+    , optparse-applicative
+    , process
+    , text
+    , unordered-containers
+    , yaml
+  default-language: Haskell2010
+
+executable jle-git-tintin
+  main-is: git-tintin.hs
+  other-modules:
+      Paths_jle_utils
+  hs-source-dirs:
+      app
+  ghc-options: -fwarn-redundant-constraints -Wall -Wcompat -Werror=incomplete-patterns -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base
+    , directory
+    , filepath
+    , jle-utils
+    , monad-logger
+    , optparse-applicative
+    , process
+    , text
+  default-language: Haskell2010
+
+executable jle-travis-stack
+  main-is: travis-stack.hs
+  other-modules:
+      Paths_jle_utils
+  hs-source-dirs:
+      app
+  ghc-options: -fwarn-redundant-constraints -Wall -Wcompat -Werror=incomplete-patterns -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      Cabal
+    , aeson
+    , base
+    , containers
+    , curl
+    , directory
+    , filepath
+    , jle-utils
+    , lens
+    , lens-aeson
+    , megaparsec
+    , mtl
+    , nonempty-containers
+    , process
+    , text
+    , transformers
+    , vector
+    , witherable
+    , yaml
+  default-language: Haskell2010
+
+executable jle-update-gh-pages
+  main-is: update-gh-pages.hs
+  other-modules:
+      Paths_jle_utils
+  hs-source-dirs:
+      app
+  ghc-options: -fwarn-redundant-constraints -Wall -Wcompat -Werror=incomplete-patterns -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base
+    , jle-utils
+    , monad-logger
+    , optparse-applicative
+    , text
+  default-language: Haskell2010
+
+-- executable jle-update-prices
+--   main-is: update-prices.hs
+--   other-modules:
+--       Paths_jle_utils
+--   hs-source-dirs:
+--       app
+--   ghc-options: -fwarn-redundant-constraints -Wall -Wcompat -Werror=incomplete-patterns -threaded -rtsopts -with-rtsopts=-N
+--   build-depends:
+--       aeson
+--     , base
+--     , containers
+--     , data-default
+--     , hledger-lib >=1.9
+--     , lens
+--     , lens-aeson
+--     , text
+--     , time
+--     , wreq
+--   default-language: Haskell2010
